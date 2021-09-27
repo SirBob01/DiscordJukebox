@@ -1,0 +1,31 @@
+{
+  "name": "discordrecords",
+  "version": "1.0.0",
+  "description": "Discord music bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SirBob01/DiscordRecords.git"
+  },
+  "keywords": [
+    "discord",
+    "music",
+    "bot"
+  ],
+  "author": "Keith Leonardo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SirBob01/DiscordRecords/issues"
+  },
+  "homepage": "https://github.com/SirBob01/DiscordRecords#readme",
+  "dependencies": {
+    "discord.js": "^13.1.0",
+    "dotenv": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.13"
+  }
+}
