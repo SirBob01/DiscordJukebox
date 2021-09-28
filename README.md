@@ -1,2 +1,3 @@
-# DiscordRecords
+# DiscordJukebox
+
 A Discord music bot
