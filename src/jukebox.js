@@ -39,8 +39,8 @@ class Jukebox {
   }
 
   /**
-     * Clear the queue
-     */
+   * Clear the queue
+   */
   clear (message, params) {
     this.audioPlayer.stop(true)
     this.musicQueue = []
@@ -49,16 +49,16 @@ class Jukebox {
   }
 
   /**
-     * Skip the current track
-     */
+   * Skip the current track
+   */
   skip (message, params) {
     this.audioPlayer.stop(true)
     this.queue(message)
   }
 
   /**
-     * Enqueue a new music track
-     */
+   * Enqueue a new music track
+   */
   async play (message, params) {
     if (!message.member.voice.channel) {
       message.channel.send('You must be in a voice channel to queue tracks.')
@@ -112,8 +112,8 @@ class Jukebox {
   }
 
   /**
-     * Toggle looping the current track
-     */
+   * Toggle looping the current track
+   */
   loop (message, params) {
     if (this.musicQueue.length == 0) {
       message.channel.send('Nothing is currently playing.')
@@ -129,15 +129,15 @@ class Jukebox {
   }
 
   /**
-     * God can't do all the work.
-     */
+   * God can't do all the work.
+   */
   penis (message, params) {
     this.play(message, ['https://youtu.be/1t8iu2PFWj4'])
   }
 
   /**
-     * Toggle looping the entire queue
-     */
+   * Toggle looping the entire queue
+   */
   loopall (message, params) {
     this.loopQueue = !this.loopQueue
     if (this.loopQueue) {
@@ -148,15 +148,15 @@ class Jukebox {
   }
 
   /**
-     * Disconnect the bot from the channel
-     */
+   * Disconnect the bot from the channel
+   */
   kick (message, params) {
     this.voiceConnection.destroy()
   }
 
   /**
-     * Pause the current track
-     */
+   * Pause the current track
+   */
   stop (message, params) {
     if (this.musicQueue.length == 0) {
       message.channel.send('Nothing is currently playing.')
@@ -167,8 +167,8 @@ class Jukebox {
   }
 
   /**
-     * Resume the current track
-     */
+   * Resume the current track
+   */
   resume (message, params) {
     if (this.musicQueue.length == 0) {
       message.channel.send('Nothing is currently playing.')
@@ -179,8 +179,8 @@ class Jukebox {
   }
 
   /**
-     * List out all the items in the queue
-     */
+   * List out all the items in the queue
+   */
   queue (message, params) {
     const rows = []
     for (let i = 0; i < this.musicQueue.length; i++) {
@@ -205,8 +205,8 @@ class Jukebox {
   }
 
   /**
-     * Remove a track from the queue by position index
-     */
+   * Remove a track from the queue by position index
+   */
   remove (message, params) {
     const index = parseInt(params[0], 10) - 1
     const skip = index == this.currentTrack
@@ -226,8 +226,8 @@ class Jukebox {
   }
 
   /**
-     * Shuffle the queue
-     */
+   * Shuffle the queue
+   */
   shuffle (message, params) {
     const head = this.musicQueue.slice(0, this.currentTrack)
     const current = [this.musicQueue[this.currentTrack]]
@@ -249,8 +249,8 @@ class Jukebox {
   }
 
   /**
-     * Execute primary logic
-     */
+   * Execute primary logic
+   */
   playback () {
     if (this.audioPlayer.state.status != voice.AudioPlayerStatus.Idle || this.musicQueue.length == 0) {
       return
