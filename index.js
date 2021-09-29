@@ -242,15 +242,19 @@ class Jukebox {
      */
     remove(message, params) {
         let index = parseInt(params[0], 10)-1;
-        if(Number.isNaN(index) || index <= 0 || index >= this.musicQueue.length) {
+        let skip = index == this.currentTrack;
+        if(Number.isNaN(index) || index < 0 || index >= this.musicQueue.length) {
             message.channel.send("Not a valid position");
             return;
         }
 
-        if(index == this.currentTrack) {
-            this.skip(message, params);
-        }
         this.musicQueue.splice(index, 1);
+        if(index <= this.currentTrack) {
+            this.currentTrack--;
+        }
+        if(skip) {
+            this.audioPlayer.stop(true);
+        }
         this.queue(message);
     }
 
