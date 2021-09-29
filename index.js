@@ -220,10 +220,15 @@ class Jukebox {
      * Shuffle the queue
      */
     shuffle(message, params) {
-        for(let i = this.musicQueue.length-1; i > 0; i--) {
+        let head = [this.musicQueue[0]]
+        let tail = this.musicQueue.slice(1);
+
+        // Only shuffle the tail of the list, head is currently playing
+        for(let i = tail.length-1; i > 0; i--) {
             let randIndex = Math.floor(Math.random() * i);
-            [this.musicQueue[i], this.musicQueue[randIndex]] = [this.musicQueue[randIndex], this.musicQueue[i]];
+            [tail[i], tail[randIndex]] = [tail[randIndex], tail[i]];
         }
+        this.musicQueue = head.concat(tail);
         this.queue(message);
     }
 
