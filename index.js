@@ -46,12 +46,20 @@ class Jukebox {
         this.currentChannel = null;
 
         this.musicQueue = [];
-        this.looping = false;
+        this.currentTrack = 0;
+        this.loopTrack = false;
+        this.loopQueue = false;
 
         this.audioPlayer.on('stateChange', (oldState, newState) => {
             if(oldState.status == voice.AudioPlayerStatus.Playing && newState.status == voice.AudioPlayerStatus.Idle) {
-                if(!this.looping) {
-                    this.musicQueue.shift();
+                if(!this.loopTrack) {
+                    this.currentTrack++;
+                }
+                if(this.currentTrack >= this.musicQueue.length) {
+                    this.currentTrack = 0;
+                    if(!this.loopQueue) {
+                        this.musicQueue = [];
+                    }
                 }
                 this.playback();
             }
@@ -64,6 +72,7 @@ class Jukebox {
     clear(message, params) {
         this.audioPlayer.stop(true);
         this.musicQueue = [];
+        this.currentTrack = 0;
         message.channel.send("Queue is now empty.");
     }
 
@@ -141,13 +150,40 @@ class Jukebox {
             return;
         }
 
-        this.looping = !this.looping;
-        if(this.looping) {
+        this.loopTrack = !this.loopTrack;
+        if(this.loopTrack) {
             message.channel.send(`'${this.musicQueue[0].title}' is now looping.`);
         }
         else {
             message.channel.send(`'${this.musicQueue[0].title}' is no longer looping.`);
         }
+    }
+
+    /**
+     * God can't do all the work.
+     */
+    penis(message, params) {
+        this.play(message, ["https://youtu.be/1t8iu2PFWj4"]);
+    }
+
+    /**
+     * Toggle looping the entire queue
+     */
+    loopall(message, params) {
+        this.loopQueue = !this.loopQueue;
+        if(this.loopQueue) {
+            message.channel.send(`Now looping the entire queue.`);
+        }
+        else {
+            message.channel.send(`No longer looping the entire queue.`);
+        }
+    }
+
+    /**
+     * Disconnect the bot from the channel
+     */
+    kick(message, params) {
+        this.voiceConnection.destroy();
     }
 
     /**
@@ -186,11 +222,11 @@ class Jukebox {
 
             if(minutes < 10) minutes = `0${minutes}`;
             if(seconds < 10) seconds = `0${seconds}`;
-            if(i == 0) {
-                rows.push({name: `Currently playing '${track.title}'`, value: `Duration ${minutes}:${seconds}`});
+            if(i == this.currentTrack) {
+                rows.push({name: `${i+1}. ${track.title} (Now Playing)`, value: `Duration ${minutes}:${seconds}`});
             }
             else {
-                rows.push({name: `${i}. ${track.title}`, value: `Duration ${minutes}:${seconds}`});
+                rows.push({name: `${i+1}. ${track.title}`, value: `Duration ${minutes}:${seconds}`});
             }
         }
         const embed = new discord.MessageEmbed()
@@ -205,30 +241,39 @@ class Jukebox {
      * Remove a track from the queue by position index
      */
     remove(message, params) {
-        let index = parseInt(params[0], 10);
-        if(Number.isNaN(index) || index <= 0 || index > this.musicQueue.length - 1 ) {
+        let index = parseInt(params[0], 10)-1;
+        if(Number.isNaN(index) || index <= 0 || index >= this.musicQueue.length) {
             message.channel.send("Not a valid position");
+            return;
         }
-        else {
-            let pos = parseInt(params[0]);
-            this.musicQueue.splice(pos, 1);
-            this.queue(message);
+
+        if(index == this.currentTrack) {
+            this.skip(message, params);
         }
+        this.musicQueue.splice(index, 1);
+        this.queue(message);
     }
 
     /**
      * Shuffle the queue
      */
     shuffle(message, params) {
-        let head = [this.musicQueue[0]]
-        let tail = this.musicQueue.slice(1);
+        let head = this.musicQueue.slice(0, this.currentTrack);
+        let current = [this.musicQueue[this.currentTrack]];
+        let tail = this.musicQueue.slice(this.currentTrack+1);
 
-        // Only shuffle the tail of the list, head is currently playing
-        for(let i = tail.length-1; i > 0; i--) {
+        // Shuffle all the tracks around the current one
+        let toShuffle = head.concat(tail);
+        for(let i = toShuffle.length-1; i > 0; i--) {
             let randIndex = Math.floor(Math.random() * i);
-            [tail[i], tail[randIndex]] = [tail[randIndex], tail[i]];
+            [toShuffle[i], toShuffle[randIndex]] = [toShuffle[randIndex], toShuffle[i]];
         }
-        this.musicQueue = head.concat(tail);
+
+        // Recombine into the original queue
+        let newHead = toShuffle.slice(0, this.currentTrack);
+        let newTail = toShuffle.slice(this.currentTrack);
+        this.musicQueue = newHead.concat(current.concat(newTail));
+
         this.queue(message);
     }
 
@@ -239,7 +284,7 @@ class Jukebox {
         if(this.audioPlayer.state.status != voice.AudioPlayerStatus.Idle || this.musicQueue.length == 0) {
             return;
         }
-        let current = this.musicQueue[0];
+        let current = this.musicQueue[this.currentTrack];
         if(current.source == sources.YOUTUBE) {
             const process = ytdl.raw(
                 current.url,
@@ -320,10 +365,12 @@ client.on('messageCreate', async (message) => {
             '//resume': 'Resume the current track',
             '//clear': 'Clear the queue',
             '//loop': 'Toggle looping the current track',
+            '//loopall': 'Toggle looping the entire queue',
             '//skip': 'Skip the current track',
             '//shuffle': 'Shuffle the queue',
             '//queue': 'List all the tracks on the queue',
-            '//remove [position]': 'Remove a track from the queue by position index'
+            '//remove [position]': 'Remove a track from the queue by position index',
+            '//kick': 'Disconnect the bot from the channel'
         };
         const embed = new discord.MessageEmbed()
             .setColor('#0099ff')
