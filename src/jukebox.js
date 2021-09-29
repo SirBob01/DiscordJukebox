@@ -1,3 +1,4 @@
+const discord = require('discord.js')
 const voice = require('@discordjs/voice')
 
 /** Youtube API stuff */
