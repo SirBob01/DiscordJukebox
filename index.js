@@ -186,15 +186,34 @@ class Jukebox {
 
             if(minutes < 10) minutes = `0${minutes}`;
             if(seconds < 10) seconds = `0${seconds}`;
-            rows.push({name: `${i+1}. `, value: `${track.title} - ${minutes}:${seconds}`});
+            if(i == 0) {
+                rows.push({name: `Currently playing '${track.title}'`, value: `Duration ${minutes}:${seconds}`});
+            }
+            else {
+                rows.push({name: `${i}. ${track.title}`, value: `Duration ${minutes}:${seconds}`});
+            }
         }
         const embed = new discord.MessageEmbed()
             .setColor('#0099ff')
             .setTitle('Record Queue')
-            .setAuthor('Keith Randall Leonardo', 'https://avatars.githubusercontent.com/u/10874047', 'https://keithleonardo.ml')
-            .setDescription(`${rows.length} track(s) in the queue`)
+            .setDescription(`${this.musicQueue.length} track(s) in the queue`)
             .addFields(...rows);
         message.channel.send({ embeds: [embed] });
+    }
+
+    /**
+     * Remove a track from the queue by position index
+     */
+    remove(message, params) {
+        let index = parseInt(params[0], 10);
+        if(Number.isNaN(index) || index <= 0 || index > this.musicQueue.length - 1 ) {
+            message.channel.send("Not a valid position");
+        }
+        else {
+            let pos = parseInt(params[0]);
+            this.musicQueue.splice(pos, 1);
+            this.queue(message);
+        }
     }
 
     /**
@@ -298,8 +317,9 @@ client.on('messageCreate', async (message) => {
             '//loop': 'Toggle looping the current track',
             '//skip': 'Skip the current track',
             '//shuffle': 'Shuffle the queue',
-            '//queue': 'List all the tracks on the queue'
-        }
+            '//queue': 'List all the tracks on the queue',
+            '//remove [position]': 'Remove a track from the queue by position index'
+        };
         const embed = new discord.MessageEmbed()
             .setColor('#0099ff')
             .setTitle('Command List')
