@@ -78,19 +78,25 @@ const fromYoutubeSearch = async (query) => {
 
 const fromSpotifyURL = async (url) => {
   const data = await spotify.getData(url)
-  if (data.type != 'playlist') {
-    throw new Error('Not a valid spotify playlist URL')
-  }
-
   const tracks = []
-  const rawTracks = data.tracks.items
-  for (const t of rawTracks) {
-    const track = await fromYoutubeSearch(`${t.track.name} ${t.track.artists.map(a => a.name).join(' ')}`)
-    if (track) {
-      tracks.push(track)
+  if (data.type == 'playlist') {
+    // List of tracks
+    const rawTracks = data.tracks.items
+    for (const t of rawTracks) {
+      const track = await fromYoutubeSearch(`${t.track.name} ${t.track.artists.map(a => a.name).join(' ')}`)
+      if (track) {
+        tracks.push(track)
+      }
     }
+    return tracks  
   }
-  return tracks
+  else if (data.type == 'track') {
+    // Single track
+    const track = await fromYoutubeSearch(`${data.name} ${data.artists.map(a => a.name).join(' ')}`)
+    tracks.push(track)
+    return tracks
+  }
+  throw new Error('Not a valid spotify playlist URL')
 }
 
 exports.sources = sources
