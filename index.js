@@ -64,6 +64,7 @@ client.on('messageCreate', async (message) => {
       '//stop': 'Pause the current track',
       '//resume': 'Resume the current track',
       '//clear': 'Clear the queue',
+      '//now': 'Show the currently playing track',
       '//loop': 'Toggle looping the current track',
       '//loopall': 'Toggle looping the entire queue',
       '//skip': 'Skip the current track',
