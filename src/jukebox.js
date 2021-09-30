@@ -2,7 +2,7 @@ const discord = require('discord.js')
 const voice = require('@discordjs/voice')
 
 /** Youtube API stuff */
-const ytdl_core = require('ytdl-core')
+const ytdlCore = require('ytdl-core')
 const ytsearch = require('youtube-search-api')
 
 const { sources } = require('./sources')
@@ -84,7 +84,7 @@ class Jukebox {
     // Queue the music
     const url = params[0]
     try {
-      const meta = await ytdl_core.getInfo(url)
+      const meta = await ytdlCore.getInfo(url)
       this.musicQueue.push(new Track(
         meta.videoDetails.video_url,
         meta.videoDetails.title,
@@ -96,7 +96,7 @@ class Jukebox {
       // URL query failed, perform a manual search
       const results = await ytsearch.GetListByKeyword(params.join(' '))
       if (results.items.length > 0) {
-        const meta = await ytdl_core.getInfo(`https://www.youtube.com/watch?v=${results.items[0].id}`)
+        const meta = await ytdlCore.getInfo(`https://www.youtube.com/watch?v=${results.items[0].id}`)
         this.musicQueue.push(new Track(
           meta.videoDetails.video_url,
           meta.videoDetails.title,
@@ -151,12 +151,12 @@ class Jukebox {
    * Disconnect the bot from the channel
    */
   kick (message, params) {
-    if(this.voiceConnection != null) {
+    if (this.voiceConnection != null) {
       this.audioPlayer.stop()
       this.voiceConnection.destroy()
       this.voiceConnection = null
       this.musicQueue = []
-      this.currentTrack = 0  
+      this.currentTrack = 0
     }
   }
 
