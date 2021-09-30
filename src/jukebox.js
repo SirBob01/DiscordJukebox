@@ -1,12 +1,11 @@
 const discord = require('discord.js')
 const voice = require('@discordjs/voice')
 
-/** Youtube API stuff */
-const ytdlCore = require('ytdl-core')
-const ytsearch = require('youtube-search-api')
-
-const { sources } = require('./sources')
-const { Track } = require('./track')
+const {
+  fromSpotifyURL,
+  fromYoutubeURL,
+  fromYoutubeSearch
+} = require('./track')
 
 /**
  * Maintains the state of a music queue and manipulates audio behavior
@@ -83,29 +82,27 @@ class Jukebox {
 
     // Queue the music
     const url = params[0]
+    let track = null
     try {
-      const meta = await ytdlCore.getInfo(url)
-      this.musicQueue.push(new Track(
-        meta.videoDetails.video_url,
-        meta.videoDetails.title,
-        meta.videoDetails.lengthSeconds,
-        sources.YOUTUBE
-      ))
+      track = await fromYoutubeURL(url)
+      this.musicQueue.push(track)
       this.queue(message)
     } catch (error) {
-      // URL query failed, perform a manual search
-      const results = await ytsearch.GetListByKeyword(params.join(' '))
-      if (results.items.length > 0) {
-        const meta = await ytdlCore.getInfo(`https://www.youtube.com/watch?v=${results.items[0].id}`)
-        this.musicQueue.push(new Track(
-          meta.videoDetails.video_url,
-          meta.videoDetails.title,
-          meta.videoDetails.lengthSeconds,
-          sources.YOUTUBE
-        ))
+      try {
+        // Spotify URL
+        track = await fromSpotifyURL(url)
+        this.musicQueue.push(track)
         this.queue(message)
-      } else {
-        message.channel.send('No matching search.')
+      } catch (error) {
+        // URL query failed, perform a manual search
+        const query = params.join(' ')
+        track = await fromYoutubeSearch(query)
+        if (track != null) {
+          this.musicQueue.push(track)
+          this.queue(message)
+        } else {
+          message.channel.send('No matching search.')
+        }
       }
     }
     this.playback()
