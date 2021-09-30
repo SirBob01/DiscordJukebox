@@ -18,7 +18,7 @@ exports.convertYoutube = (url) => {
     )
     const stream = process.stdout
     if (!stream) {
-      reject()
+      reject(new Error('Failed to create a streamable resource.'))
     }
     process.once('spawn', async () => {
       const probe = await voice.demuxProbe(stream)
