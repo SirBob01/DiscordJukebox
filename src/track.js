@@ -88,12 +88,13 @@ const fromSpotifyURL = async (url) => {
         tracks.push(track)
       }
     }
-    return tracks  
-  }
-  else if (data.type == 'track') {
+    return tracks
+  } else if (data.type == 'track') {
     // Single track
     const track = await fromYoutubeSearch(`${data.name} ${data.artists.map(a => a.name).join(' ')}`)
-    tracks.push(track)
+    if (track) {
+      tracks.push(track)
+    }
     return tracks
   }
   throw new Error('Not a valid spotify playlist URL')
