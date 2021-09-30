@@ -77,22 +77,21 @@ const fromYoutubeSearch = async (query) => {
 }
 
 const fromSpotifyURL = async (url) => {
-  let data = await spotify.getData(url)
+  const data = await spotify.getData(url)
   if (data.type != 'playlist') {
-    throw new Error("Not a valid spotify playlist URL")
+    throw new Error('Not a valid spotify playlist URL')
   }
 
-  let tracks = []
-  let rawTracks = data.tracks.items
-  for(let t of rawTracks) {
-    let track = await fromYoutubeSearch(`${t.track.name} ${t.track.artists.map(a => a.name).join(' ')}`)
-    if(track) {
+  const tracks = []
+  const rawTracks = data.tracks.items
+  for (const t of rawTracks) {
+    const track = await fromYoutubeSearch(`${t.track.name} ${t.track.artists.map(a => a.name).join(' ')}`)
+    if (track) {
       tracks.push(track)
     }
   }
   return tracks
 }
-
 
 exports.sources = sources
 exports.fromYoutubeURL = fromYoutubeURL

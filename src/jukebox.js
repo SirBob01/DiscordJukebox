@@ -83,19 +83,19 @@ class Jukebox {
     // Queue the music
     const url = params[0]
     try {
-      let track = await fromYoutubeURL(url)
+      const track = await fromYoutubeURL(url)
       this.musicQueue.push(track)
       this.queue(message)
     } catch (error) {
       try {
         // Spotify URL
-        let tracks = await fromSpotifyURL(url)
+        const tracks = await fromSpotifyURL(url)
         this.musicQueue.push(...tracks)
         this.queue(message)
       } catch (error) {
         // URL query failed, perform a manual search
         const query = params.join(' ')
-        let track = await fromYoutubeSearch(query)
+        const track = await fromYoutubeSearch(query)
         if (track != null) {
           this.musicQueue.push(track)
           this.queue(message)
@@ -211,7 +211,7 @@ class Jukebox {
    */
   now (message, params) {
     if (this.musicQueue.length == 0) {
-      message.channel.send("Nothing is currently playing.")
+      message.channel.send('Nothing is currently playing.')
       return
     }
     const current = this.musicQueue[this.currentTrack]
