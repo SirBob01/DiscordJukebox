@@ -185,7 +185,7 @@ class Jukebox {
    */
   queue (message, params) {
     const rows = []
-    for (let i = 0; i < this.musicQueue.length; i++) {
+    for (let i = 0; i < Math.min(this.musicQueue.length, 10); i++) {
       const track = this.musicQueue[i]
       let minutes = Math.floor(track.duration / 60)
       let seconds = track.duration % 60

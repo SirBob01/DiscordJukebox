@@ -5,50 +5,53 @@ const ytsearch = require('youtube-search-api')
 const spotify = require('spotify-url-info')
 
 /**
- * Enum flags that describe the source of a track
- */
-const sources = {
-  YOUTUBE: 0,
-  SPOTIFY: 1
-}
-
-/**
  * Generic class that represents a single track in the queue
  */
 class Track {
-  constructor (url, title, duration, source) {
+  constructor (url, title, duration, rawSpotifyMeta) {
     this.url = url
     this.title = title
     this.duration = duration
-    this.source = source
+    this.rawSpotifyMeta = rawSpotifyMeta
   }
 
   getResource () {
-    if (this.source == sources.YOUTUBE) {
-      return new Promise((resolve, reject) => {
-        const process = ytdl.raw(
-          this.url,
-          {
-            o: '-',
-            q: '',
-            f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
-            r: '100K'
-          },
-          { stdio: ['ignore', 'pipe', 'ignore'] }
-        )
-        const stream = process.stdout
-        if (!stream) {
-          reject(new Error('Failed to create a streamable resource.'))
+    return new Promise(async (resolve, reject) => {
+      if (this.rawSpotifyMeta != null) {
+        const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
+        const results = await ytsearch.GetListByKeyword(query)
+        if (results.items.length > 0) {
+          this.url = `https://www.youtube.com/watch?v=${results.items[0].id}`
+        } else {
+          reject(new Error('Failed to find audio for this track'))
+          return
         }
-        process.once('spawn', async () => {
-          const probe = await voice.demuxProbe(stream)
-          const resource = voice.createAudioResource(probe.stream, {
-            inputType: probe.type
-          })
-          resolve(resource)
+        this.rawSpotifyMeta = null
+      }
+
+      const process = ytdl.raw(
+        this.url,
+        {
+          o: '-',
+          q: '',
+          f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+          r: '100K'
+        },
+        { stdio: ['ignore', 'pipe', 'ignore'] }
+      )
+      const stream = process.stdout
+      if (!stream) {
+        reject(new Error('Failed to create a streamable resource.'))
+        return
+      }
+      process.once('spawn', async () => {
+        const probe = await voice.demuxProbe(stream)
+        const resource = voice.createAudioResource(probe.stream, {
+          inputType: probe.type
         })
+        resolve(resource)
       })
-    }
+    })
   }
 }
 
@@ -58,7 +61,7 @@ const fromYoutubeURL = async (url) => {
     meta.videoDetails.video_url,
     meta.videoDetails.title,
     meta.videoDetails.lengthSeconds,
-    sources.YOUTUBE
+    null
   )
 }
 
@@ -70,7 +73,7 @@ const fromYoutubeSearch = async (query) => {
       meta.videoDetails.video_url,
       meta.videoDetails.title,
       meta.videoDetails.lengthSeconds,
-      sources.YOUTUBE
+      null
     )
   }
   return null
@@ -83,24 +86,29 @@ const fromSpotifyURL = async (url) => {
     // List of tracks
     const rawTracks = data.tracks.items
     for (const t of rawTracks) {
-      const track = await fromYoutubeSearch(`${t.track.name} ${t.track.artists.map(a => a.name).join(' ')}`)
-      if (track) {
-        tracks.push(track)
-      }
+      const track = new Track(
+        t.track.href,
+        t.track.name,
+        Math.floor(t.track.duration_ms / 1000),
+        JSON.parse(JSON.stringify(t.track))
+      )
+      tracks.push(track)
     }
     return tracks
   } else if (data.type == 'track') {
     // Single track
-    const track = await fromYoutubeSearch(`${data.name} ${data.artists.map(a => a.name).join(' ')}`)
-    if (track) {
-      tracks.push(track)
-    }
+    const track = new Track(
+      data.href,
+      data.name,
+      Math.floor(data.duration_ms / 1000),
+      JSON.parse(JSON.stringify(data))
+    )
+    tracks.push(track)
     return tracks
   }
   throw new Error('Not a valid spotify playlist URL')
 }
 
-exports.sources = sources
 exports.fromYoutubeURL = fromYoutubeURL
 exports.fromSpotifyURL = fromSpotifyURL
 exports.fromYoutubeSearch = fromYoutubeSearch
