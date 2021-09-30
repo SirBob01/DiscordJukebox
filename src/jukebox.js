@@ -82,21 +82,20 @@ class Jukebox {
 
     // Queue the music
     const url = params[0]
-    let track = null
     try {
-      track = await fromYoutubeURL(url)
+      let track = await fromYoutubeURL(url)
       this.musicQueue.push(track)
       this.queue(message)
     } catch (error) {
       try {
         // Spotify URL
-        track = await fromSpotifyURL(url)
-        this.musicQueue.push(track)
+        let tracks = await fromSpotifyURL(url)
+        this.musicQueue.push(...tracks)
         this.queue(message)
       } catch (error) {
         // URL query failed, perform a manual search
         const query = params.join(' ')
-        track = await fromYoutubeSearch(query)
+        let track = await fromYoutubeSearch(query)
         if (track != null) {
           this.musicQueue.push(track)
           this.queue(message)
@@ -204,6 +203,31 @@ class Jukebox {
       .setTitle('Record Queue')
       .setDescription(`${this.musicQueue.length} track(s) in the queue`)
       .addFields(...rows)
+    message.channel.send({ embeds: [embed] })
+  }
+
+  /**
+   * Fetch information about the current track
+   */
+  now (message, params) {
+    if (this.musicQueue.length == 0) {
+      message.channel.send("Nothing is currently playing.")
+      return
+    }
+    const current = this.musicQueue[this.currentTrack]
+
+    let minutes = Math.floor(current.duration / 60)
+    let seconds = current.duration % 60
+
+    if (minutes < 10) minutes = `0${minutes}`
+    if (seconds < 10) seconds = `0${seconds}`
+    const duration = `${minutes}:${seconds}`
+
+    const embed = new discord.MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`${current.title} is now playing`)
+      .setURL(current.url)
+      .setDescription(`Position ${this.currentTrack + 1}/${this.musicQueue.length} | Duration ${duration}`)
     message.channel.send({ embeds: [embed] })
   }
 

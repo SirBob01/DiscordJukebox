@@ -2,6 +2,7 @@ const voice = require('@discordjs/voice')
 const ytdl = require('youtube-dl-exec')
 const ytdlCore = require('ytdl-core')
 const ytsearch = require('youtube-search-api')
+const spotify = require('spotify-url-info')
 
 /**
  * Enum flags that describe the source of a track
@@ -51,9 +52,7 @@ class Track {
   }
 }
 
-exports.sources = sources
-
-exports.fromYoutubeURL = async (url) => {
+const fromYoutubeURL = async (url) => {
   const meta = await ytdlCore.getInfo(url)
   return new Track(
     meta.videoDetails.video_url,
@@ -63,11 +62,7 @@ exports.fromYoutubeURL = async (url) => {
   )
 }
 
-exports.fromSpotifyURL = async (url) => {
-  throw new Error('TODO')
-}
-
-exports.fromYoutubeSearch = async (query) => {
+const fromYoutubeSearch = async (query) => {
   const results = await ytsearch.GetListByKeyword(query)
   if (results.items.length > 0) {
     const meta = await ytdlCore.getInfo(`https://www.youtube.com/watch?v=${results.items[0].id}`)
@@ -80,3 +75,26 @@ exports.fromYoutubeSearch = async (query) => {
   }
   return null
 }
+
+const fromSpotifyURL = async (url) => {
+  let data = await spotify.getData(url)
+  if (data.type != 'playlist') {
+    throw new Error("Not a valid spotify playlist URL")
+  }
+
+  let tracks = []
+  let rawTracks = data.tracks.items
+  for(let t of rawTracks) {
+    let track = await fromYoutubeSearch(`${t.track.name} ${t.track.artists.map(a => a.name).join(' ')}`)
+    if(track) {
+      tracks.push(track)
+    }
+  }
+  return tracks
+}
+
+
+exports.sources = sources
+exports.fromYoutubeURL = fromYoutubeURL
+exports.fromSpotifyURL = fromSpotifyURL
+exports.fromYoutubeSearch = fromYoutubeSearch
