@@ -51,7 +51,7 @@ client.on('messageCreate', async (message) => {
   const text = message.content.trim()
 
   // Must be a valid command and by a human
-  if (!text.startsWith('//') || message.author.bot) {
+  if (!text.startsWith('**') || message.author.bot) {
     return
   }
 

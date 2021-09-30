@@ -128,6 +128,7 @@ class Jukebox {
    * God can't do all the work.
    */
   penis (message, params) {
+    this.clear(message)
     this.play(message, ['https://youtu.be/1t8iu2PFWj4'])
   }
 
