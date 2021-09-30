@@ -70,7 +70,7 @@ class Jukebox {
     }
 
     // Join whichever voice channel the sender is currently in
-    if (this.currentChannel != message.member.voice.channel) {
+    if (this.currentChannel != message.member.voice.channel || this.voiceConnection == null) {
       this.currentChannel = message.member.voice.channel
       if (this.voiceConnection != null) this.voiceConnection.destroy()
       this.voiceConnection = voice.joinVoiceChannel({
@@ -151,7 +151,13 @@ class Jukebox {
    * Disconnect the bot from the channel
    */
   kick (message, params) {
-    this.voiceConnection.destroy()
+    if(this.voiceConnection != null) {
+      this.audioPlayer.stop()
+      this.voiceConnection.destroy()
+      this.voiceConnection = null
+      this.musicQueue = []
+      this.currentTrack = 0  
+    }
   }
 
   /**
