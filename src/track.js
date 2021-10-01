@@ -8,11 +8,11 @@ const spotify = require('spotify-url-info')
  * Generic class that represents a single track in the queue
  */
 class Track {
-  constructor (url, title, duration, rawSpotifyMeta) {
+  constructor (url, title, duration) {
     this.url = url
     this.title = title
     this.duration = duration
-    this.rawSpotifyMeta = rawSpotifyMeta
+    this.rawSpotifyMeta = null
   }
 
   /**
@@ -81,8 +81,7 @@ const fromYoutubeURL = async (url) => {
   return new Track(
     meta.videoDetails.video_url,
     meta.videoDetails.title,
-    meta.videoDetails.lengthSeconds,
-    null
+    meta.videoDetails.lengthSeconds
   )
 }
 
@@ -96,8 +95,7 @@ const fromYoutubeSearch = async (query) => {
     return new Track(
       meta.videoDetails.video_url,
       meta.videoDetails.title,
-      meta.videoDetails.lengthSeconds,
-      null
+      meta.videoDetails.lengthSeconds
     )
   }
   return null
@@ -117,9 +115,9 @@ const fromSpotifyURL = async (url) => {
       const track = new Track(
         t.track.href,
         t.track.name,
-        Math.floor(t.track.duration_ms / 1000),
-        JSON.parse(JSON.stringify(t.track))
+        Math.floor(t.track.duration_ms / 1000)
       )
+      track.rawSpotifyMeta = t.track
       tracks.push(track)
     }
     return tracks
@@ -128,9 +126,9 @@ const fromSpotifyURL = async (url) => {
     const track = new Track(
       data.href,
       data.name,
-      Math.floor(data.duration_ms / 1000),
-      JSON.parse(JSON.stringify(data))
+      Math.floor(data.duration_ms / 1000)
     )
+    track.rawSpotifyMeta = data
     tracks.push(track)
     return tracks
   }
