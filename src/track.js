@@ -15,14 +15,32 @@ class Track {
     this.rawSpotifyMeta = rawSpotifyMeta
   }
 
+  /**
+   * Algorithm for matching a Spotify track to a Youtube video
+   */
+  async matchSpotify () {
+    // Search based on the title and artists of the track
+    const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
+    const results = await ytsearch.GetListByKeyword(query)
+
+    // Select the result with the closest duration (most likely candidate for match)
+    // No need to look past the first page, those would probably be poor matches
+    const bestMatch = results.items[0]
+    if (bestMatch != null) {
+      this.url = `https://www.youtube.com/watch?v=${bestMatch.id}`
+    } else {
+      this.url = null
+    }
+  }
+
+  /**
+   * Fetch the streamable resource needed by Discord to play audio
+   */
   getResource () {
     return new Promise(async (resolve, reject) => {
       if (this.rawSpotifyMeta != null) {
-        const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
-        const results = await ytsearch.GetListByKeyword(query)
-        if (results.items.length > 0) {
-          this.url = `https://www.youtube.com/watch?v=${results.items[0].id}`
-        } else {
+        await this.matchSpotify()
+        if (this.url == null) {
           reject(new Error('Failed to find audio for this track'))
           return
         }
@@ -55,6 +73,9 @@ class Track {
   }
 }
 
+/**
+ * Create a new track from a Youtube URL
+ */
 const fromYoutubeURL = async (url) => {
   const meta = await ytdlCore.getInfo(url)
   return new Track(
@@ -65,6 +86,9 @@ const fromYoutubeURL = async (url) => {
   )
 }
 
+/**
+ * Create a new track from a Youtube keyword search
+ */
 const fromYoutubeSearch = async (query) => {
   const results = await ytsearch.GetListByKeyword(query)
   if (results.items.length > 0) {
@@ -79,6 +103,10 @@ const fromYoutubeSearch = async (query) => {
   return null
 }
 
+/**
+ * Create a list of new tracks from a Spotify URL
+ * It can either read a single track or a playlist (multiple tracks)
+ */
 const fromSpotifyURL = async (url) => {
   const data = await spotify.getData(url)
   const tracks = []
