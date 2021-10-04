@@ -6,5 +6,3 @@ This supports most of the basic features of the original bots.
 
 ## TODO
 - Add pagination to the `queue` command
-- Display the thumbnail of the current track for `now` and `queue` commands
-- Display current track timestamp for `now` and `queue` commands
