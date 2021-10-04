@@ -8,6 +8,33 @@ const {
 } = require('./track')
 
 /**
+ * Convert time in seconds to a formatted string
+ */
+const formatTime = (time) => {
+  let minutes = Math.floor(time / 60)
+  let seconds = time % 60
+
+  if (minutes < 10) minutes = `0${minutes}`
+  if (seconds < 10) seconds = `0${seconds}`
+  return `${minutes}:${seconds}`
+}
+
+/**
+ * Generate a slider string
+ */
+const generateSlider = (currentTime, totalTime) => {
+  let length = 25
+  let xPos = Math.floor(length * currentTime / totalTime)
+  let slider = ''
+  for (let i = 0; i < length; i++) {
+    if (i == xPos) slider += 'o'
+    else if (i == 0 || i == length - 1) slider += '|'
+    else slider += '-'
+  }
+  return slider
+}
+
+/**
  * Maintains the state of a music queue and manipulates audio behavior
  */
 class Jukebox {
@@ -192,23 +219,25 @@ class Jukebox {
     const rows = []
     for (let i = 0; i < Math.min(this.musicQueue.length, 10); i++) {
       const track = this.musicQueue[i]
-      let minutes = Math.floor(track.duration / 60)
-      let seconds = track.duration % 60
-
-      if (minutes < 10) minutes = `0${minutes}`
-      if (seconds < 10) seconds = `0${seconds}`
+      const duration = formatTime(track.duration)
       if (i == this.currentTrack) {
-        rows.push({ name: `${i + 1}. ${track.title} (Now Playing)`, value: `Duration ${minutes}:${seconds}` })
+        const startTime = track.startTime ? track.startTime : (new Date()).getTime()
+        const currentTime = Math.floor(((new Date()).getTime() - startTime) / 1000)
+        const slider = generateSlider(currentTime, track.duration)
+
+        rows.push({ name: `${i + 1}. ${track.title} (Now Playing)`, value: `${slider} [${formatTime(currentTime)} / ${duration}]` })
       } else {
-        rows.push({ name: `${i + 1}. ${track.title}`, value: `Duration ${minutes}:${seconds}` })
+        rows.push({ name: `${i + 1}. ${track.title}`, value: `Duration ${duration}` })
       }
     }
     const embed = new discord.MessageEmbed()
       .setColor('#0099ff')
       .setTitle('Record Queue')
       .setDescription(`${this.musicQueue.length} track(s) in the queue`)
-      .setThumbnail(this.musicQueue[this.currentTrack].thumbnail)
       .addFields(...rows)
+    if (this.musicQueue.length > 0) {
+      embed.setThumbnail(this.musicQueue[this.currentTrack].thumbnail)
+    }
     message.channel.send({ embeds: [embed] })
   }
 
@@ -222,19 +251,17 @@ class Jukebox {
     }
     const current = this.musicQueue[this.currentTrack]
 
-    let minutes = Math.floor(current.duration / 60)
-    let seconds = current.duration % 60
-
-    if (minutes < 10) minutes = `0${minutes}`
-    if (seconds < 10) seconds = `0${seconds}`
-    const duration = `${minutes}:${seconds}`
-
+    const startTime = current.startTime ? current.startTime : (new Date()).getTime()
+    const currentTime = Math.floor(((new Date()).getTime() - startTime) / 1000)
+    const duration = formatTime(current.duration)
+    const slider = generateSlider(currentTime, current.duration)
+    
     const embed = new discord.MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`${current.title} is now playing`)
       .setURL(current.url)
       .setThumbnail(current.thumbnail)
-      .setDescription(`Position ${this.currentTrack + 1}/${this.musicQueue.length} | Duration ${duration}`)
+      .setDescription(`${slider} [${formatTime(currentTime)} / ${duration}] | Position ${this.currentTrack + 1} / ${this.musicQueue.length}`)
     message.channel.send({ embeds: [embed] })
   }
 

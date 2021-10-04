@@ -15,21 +15,6 @@ const searchOpts = {
 }
 
 /**
- * Algorithm for finding the optimal match from youtube
- */
-const optimalSearchMatch = async (query) => {
-  const results = (await search(query, searchOpts)).results.filter(item => item.kind == 'youtube#video')
-  const fuzzy = new fuzzyjs.Fuzzy({ all_matches: false })
-
-  const mapped = {}
-  results.forEach(item => {
-    mapped[`${item.title} ${item.channelTitle}`] = item
-  })
-  fuzzy.index(Object.keys(mapped))
-  return mapped[fuzzy.search(query)]
-}
-
-/**
  * Generic class that represents a single track in the queue
  */
 class Track {
@@ -38,6 +23,7 @@ class Track {
     this.title = title
     this.duration = duration
     this.thumbnail = thumbnail
+    this.startTime = null
     this.rawSpotifyMeta = null
   }
 
@@ -47,7 +33,16 @@ class Track {
   async matchSpotify () {
     // Search based on the title and artists of the track
     const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
-    const bestMatch = await optimalSearchMatch(query)
+    const results = (await search(query, searchOpts)).results.filter(item => item.kind == 'youtube#video')
+    const fuzzy = new fuzzyjs.Fuzzy({ all_matches: false })
+  
+    const mapped = {}
+    results.forEach(item => {
+      mapped[`${item.title} ${item.channelTitle}`] = item
+    })
+    fuzzy.index(Object.keys(mapped))
+    const bestMatch = mapped[fuzzy.search(query)]
+
     if (bestMatch != null) {
       this.url = bestMatch.link
     } else {
@@ -89,6 +84,7 @@ class Track {
         const resource = voice.createAudioResource(probe.stream, {
           inputType: probe.type
         })
+        this.startTime = (new Date()).getTime()
         resolve(resource)
       })
     })
@@ -112,7 +108,7 @@ const fromYoutubeURL = async (url) => {
  * Create a new track from a Youtube keyword search
  */
 const fromYoutubeSearch = async (query) => {
-  const result = await optimalSearchMatch(query)
+  const result = (await search(query, searchOpts)).results.filter(item => item.kind == 'youtube#video')[0]
   if (result != null) {
     const meta = await ytdlCore.getInfo(result.link)
     return new Track(
