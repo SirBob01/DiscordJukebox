@@ -93,14 +93,18 @@ class Jukebox {
         this.musicQueue.push(...tracks)
         this.queue(message)
       } catch (error) {
-        // URL query failed, perform a manual search
-        const query = params.join(' ')
-        const track = await fromYoutubeSearch(query)
-        if (track != null) {
-          this.musicQueue.push(track)
-          this.queue(message)
-        } else {
-          message.channel.send('No matching search.')
+        try {
+          // URL query failed, perform a manual search
+          const query = params.join(' ')
+          const track = await fromYoutubeSearch(query)
+          if (track != null) {
+            this.musicQueue.push(track)
+            this.queue(message)
+          } else {
+            message.channel.send('No matching search.')
+          }
+        } catch (error) {
+          message.channel.send('Audio is unavailable for this query.')
         }
       }
     }
