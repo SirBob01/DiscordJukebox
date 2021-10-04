@@ -31,7 +31,7 @@
     "libsodium-wrappers": "^0.7.9",
     "spotify-url-info": "^2.2.3",
     "youtube-dl-exec": "^1.2.13",
-    "youtube-search-api": "^1.0.10",
+    "youtube-search": "^1.1.6",
     "ytdl-core": "4.9.1"
   },
   "devDependencies": {

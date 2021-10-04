@@ -1,8 +1,16 @@
 const voice = require('@discordjs/voice')
 const ytdl = require('youtube-dl-exec')
 const ytdlCore = require('ytdl-core')
-const ytsearch = require('youtube-search-api')
+const search = require('youtube-search')
 const spotify = require('spotify-url-info')
+
+/**
+ * Youtube search options
+ */
+const searchOpts = {
+  maxResults: 10, 
+  key: process.env.GOOGLE_API_KEY
+}
 
 /**
  * Generic class that represents a single track in the queue
@@ -21,13 +29,13 @@ class Track {
   async matchSpotify () {
     // Search based on the title and artists of the track
     const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
-    const results = (await ytsearch.GetListByKeyword(query)).items.filter(i => i.type == 'video')
+    const results = (await search(query, searchOpts)).filter(i => i.kind == 'youtube#video')
 
     // Select the result with the closest duration (most likely candidate for match)
     // No need to look past the first page, those would probably be poor matches
     const bestMatch = results[0]
     if (bestMatch != null) {
-      this.url = `https://www.youtube.com/watch?v=${bestMatch.id}`
+      this.url = bestMatch.link
     } else {
       this.url = null
     }
@@ -89,9 +97,9 @@ const fromYoutubeURL = async (url) => {
  * Create a new track from a Youtube keyword search
  */
 const fromYoutubeSearch = async (query) => {
-  const results = (await ytsearch.GetListByKeyword(query)).items.filter(i => i.type == 'video')
+  const results = (await search(query, searchOpts)).filter(i => i.kind == 'youtube#video')
   if (results.length > 0) {
-    const meta = await ytdlCore.getInfo(`https://www.youtube.com/watch?v=${results[0].id}`)
+    const meta = await ytdlCore.getInfo(results[0].link)
     return new Track(
       meta.videoDetails.video_url,
       meta.videoDetails.title,
