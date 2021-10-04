@@ -33,10 +33,11 @@ const optimalSearchMatch = async (query) => {
  * Generic class that represents a single track in the queue
  */
 class Track {
-  constructor (url, title, duration) {
+  constructor (url, title, duration, thumbnail) {
     this.url = url
     this.title = title
     this.duration = duration
+    this.thumbnail = thumbnail
     this.rawSpotifyMeta = null
   }
 
@@ -102,7 +103,8 @@ const fromYoutubeURL = async (url) => {
   return new Track(
     meta.videoDetails.video_url,
     meta.videoDetails.title,
-    meta.videoDetails.lengthSeconds
+    meta.videoDetails.lengthSeconds,
+    meta.videoDetails.thumbnails[1].url
   )
 }
 
@@ -116,7 +118,8 @@ const fromYoutubeSearch = async (query) => {
     return new Track(
       meta.videoDetails.video_url,
       meta.videoDetails.title,
-      meta.videoDetails.lengthSeconds
+      meta.videoDetails.lengthSeconds,
+      meta.videoDetails.thumbnails[1].url
     )
   }
   return null
@@ -136,7 +139,8 @@ const fromSpotifyURL = async (url) => {
       const track = new Track(
         t.track.href,
         t.track.name,
-        Math.floor(t.track.duration_ms / 1000)
+        Math.floor(t.track.duration_ms / 1000),
+        t.album.images[0].url
       )
       track.rawSpotifyMeta = t.track
       tracks.push(track)
@@ -147,7 +151,8 @@ const fromSpotifyURL = async (url) => {
     const track = new Track(
       data.href,
       data.name,
-      Math.floor(data.duration_ms / 1000)
+      Math.floor(data.duration_ms / 1000),
+      data.album.images[0].url
     )
     track.rawSpotifyMeta = data
     tracks.push(track)

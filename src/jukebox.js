@@ -207,6 +207,7 @@ class Jukebox {
       .setColor('#0099ff')
       .setTitle('Record Queue')
       .setDescription(`${this.musicQueue.length} track(s) in the queue`)
+      .setThumbnail(this.musicQueue[this.currentTrack].thumbnail)
       .addFields(...rows)
     message.channel.send({ embeds: [embed] })
   }
@@ -232,6 +233,7 @@ class Jukebox {
       .setColor('#0099ff')
       .setTitle(`${current.title} is now playing`)
       .setURL(current.url)
+      .setThumbnail(current.thumbnail)
       .setDescription(`Position ${this.currentTrack + 1}/${this.musicQueue.length} | Duration ${duration}`)
     message.channel.send({ embeds: [embed] })
   }
