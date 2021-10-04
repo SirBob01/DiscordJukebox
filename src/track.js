@@ -21,11 +21,11 @@ class Track {
   async matchSpotify () {
     // Search based on the title and artists of the track
     const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
-    const results = await ytsearch.GetListByKeyword(query)
+    const results = (await ytsearch.GetListByKeyword(query)).items.filter(i => i.type == 'video')
 
     // Select the result with the closest duration (most likely candidate for match)
     // No need to look past the first page, those would probably be poor matches
-    const bestMatch = results.items[0]
+    const bestMatch = results[0]
     if (bestMatch != null) {
       this.url = `https://www.youtube.com/watch?v=${bestMatch.id}`
     } else {
@@ -89,9 +89,9 @@ const fromYoutubeURL = async (url) => {
  * Create a new track from a Youtube keyword search
  */
 const fromYoutubeSearch = async (query) => {
-  const results = await ytsearch.GetListByKeyword(query)
-  if (results.items.length > 0) {
-    const meta = await ytdlCore.getInfo(`https://www.youtube.com/watch?v=${results.items[0].id}`)
+  const results = (await ytsearch.GetListByKeyword(query)).items.filter(i => i.type == 'video')
+  if (results.length > 0) {
+    const meta = await ytdlCore.getInfo(`https://www.youtube.com/watch?v=${results[0].id}`)
     return new Track(
       meta.videoDetails.video_url,
       meta.videoDetails.title,
