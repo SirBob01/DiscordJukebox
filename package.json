@@ -24,6 +24,7 @@
   "dependencies": {
     "@discordjs/opus": "^0.5.3",
     "@discordjs/voice": "^0.6.0",
+    "@sirbob01/fuzzyjs": "^1.0.2",
     "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
     "ffmpeg": "0.0.4",

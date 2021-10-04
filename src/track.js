@@ -1,15 +1,32 @@
 const voice = require('@discordjs/voice')
 const ytdl = require('youtube-dl-exec')
 const ytdlCore = require('ytdl-core')
-const search = require('youtube-search')
 const spotify = require('spotify-url-info')
+const search = require('youtube-search')
+const fuzzyjs = require('@sirbob01/fuzzyjs')
 
 /**
  * Youtube search options
  */
 const searchOpts = {
-  maxResults: 10, 
+  maxResults: 10,
+  safeSearch: 'strict',
   key: process.env.GOOGLE_API_KEY
+}
+
+/**
+ * Algorithm for finding the optimal match from youtube
+ */
+const optimalSearchMatch = async (query) => {
+  const results = (await search(query, searchOpts)).results.filter(item => item.kind == 'youtube#video')
+  const fuzzy = new fuzzyjs.Fuzzy({ all_matches: false })
+
+  const mapped = {}
+  results.forEach(item => {
+    mapped[`${item.title} ${item.channelTitle}`] = item
+  })
+  fuzzy.index(Object.keys(mapped))
+  return mapped[fuzzy.search(query)]
 }
 
 /**
@@ -24,16 +41,12 @@ class Track {
   }
 
   /**
-   * Algorithm for matching a Spotify track to a Youtube video
+   * Match a Spotify track to a Youtube video
    */
   async matchSpotify () {
     // Search based on the title and artists of the track
     const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
-    const results = (await search(query, searchOpts)).results.filter(i => i.kind == 'youtube#video')
-
-    // Select the result with the closest duration (most likely candidate for match)
-    // No need to look past the first page, those would probably be poor matches
-    const bestMatch = results[0]
+    const bestMatch = await optimalSearchMatch(query)
     if (bestMatch != null) {
       this.url = bestMatch.link
     } else {
@@ -97,9 +110,9 @@ const fromYoutubeURL = async (url) => {
  * Create a new track from a Youtube keyword search
  */
 const fromYoutubeSearch = async (query) => {
-  const results = (await search(query, searchOpts)).results.filter(i => i.kind == 'youtube#video')
-  if (results.length > 0) {
-    const meta = await ytdlCore.getInfo(results[0].link)
+  const result = await optimalSearchMatch(query)
+  if (result != null) {
+    const meta = await ytdlCore.getInfo(result.link)
     return new Track(
       meta.videoDetails.video_url,
       meta.videoDetails.title,
