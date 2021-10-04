@@ -136,7 +136,7 @@ const fromSpotifyURL = async (url) => {
         t.track.href,
         t.track.name,
         Math.floor(t.track.duration_ms / 1000),
-        t.album.images[0].url
+        t.track.album.images[0].url
       )
       track.rawSpotifyMeta = t.track
       tracks.push(track)
