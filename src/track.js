@@ -2,17 +2,7 @@ const voice = require('@discordjs/voice')
 const ytdl = require('youtube-dl-exec')
 const ytdlCore = require('ytdl-core')
 const spotify = require('spotify-url-info')
-const search = require('youtube-search')
-const fuzzyjs = require('@sirbob01/fuzzyjs')
-
-/**
- * Youtube search options
- */
-const searchOpts = {
-  maxResults: 10,
-  safeSearch: 'strict',
-  key: process.env.GOOGLE_API_KEY
-}
+const search = require('./search')
 
 /**
  * Generic class that represents a single track in the queue
@@ -33,15 +23,36 @@ class Track {
   async matchSpotify () {
     // Search based on the title and artists of the track
     const query = `${this.rawSpotifyMeta.name} ${this.rawSpotifyMeta.artists.map(a => a.name).join(' ')}`
-    const results = (await search(query, searchOpts)).results.filter(item => item.kind == 'youtube#video')
-    const fuzzy = new fuzzyjs.Fuzzy({ all_matches: false })
-  
+    const results = await search.byKeyword(query)
+
     const mapped = {}
     results.forEach(item => {
       mapped[`${item.title} ${item.channelTitle}`] = item
     })
-    fuzzy.index(Object.keys(mapped))
-    const bestMatch = mapped[fuzzy.search(query)]
+
+    const keys = Object.keys(mapped)
+    keys.sort((a, b) => {
+      const score1 = 1 - Math.abs(mapped[a].duration.seconds - this.duration) / this.duration
+      const score2 = 1 - Math.abs(mapped[b].duration.seconds - this.duration) / this.duration
+
+      if (score1 < score2) {
+        return 1
+      } else if (score1 > score2) {
+        return -1
+      }
+      return 0
+    })
+
+    let i = 0
+    let bestMatch = null
+    while (bestMatch == null && i < keys.length) {
+      try {
+        await ytdlCore.getInfo(mapped[keys[i]].link)
+        bestMatch = mapped[keys[i]]
+      } catch (error) {
+        i++
+      }
+    }
 
     if (bestMatch != null) {
       this.url = bestMatch.link
@@ -108,9 +119,19 @@ const fromYoutubeURL = async (url) => {
  * Create a new track from a Youtube keyword search
  */
 const fromYoutubeSearch = async (query) => {
-  const result = (await search(query, searchOpts)).results.filter(item => item.kind == 'youtube#video')[0]
+  const results = await search.byKeyword(query)
+  let i = 0
+  let result = null
+  let meta = null
+  while (result == null && i < results.length) {
+    try {
+      result = results[i]
+      meta = await ytdlCore.getInfo(result.link)
+    } catch (error) {
+      i++
+    }
+  }
   if (result != null) {
-    const meta = await ytdlCore.getInfo(result.link)
     return new Track(
       meta.videoDetails.video_url,
       meta.videoDetails.title,

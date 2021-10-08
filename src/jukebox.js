@@ -23,8 +23,8 @@ const formatTime = (time) => {
  * Generate a slider string
  */
 const generateSlider = (currentTime, totalTime) => {
-  let length = 25
-  let xPos = Math.floor(length * currentTime / totalTime)
+  const length = 25
+  const xPos = Math.floor(length * currentTime / totalTime)
   let slider = ''
   for (let i = 0; i < length; i++) {
     if (i == xPos) slider += 'o'
@@ -255,7 +255,7 @@ class Jukebox {
     const currentTime = Math.floor(((new Date()).getTime() - startTime) / 1000)
     const duration = formatTime(current.duration)
     const slider = generateSlider(currentTime, current.duration)
-    
+
     const embed = new discord.MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`${current.title} is now playing`)
@@ -320,8 +320,8 @@ class Jukebox {
     current.getResource()
       .then((resource) => this.audioPlayer.play(resource))
       .catch(() => {
-        // Skip current track and retry if it fails
         this.currentTrack++
+        this.currentTrack %= this.musicQueue.length
         this.playback()
       })
   }
