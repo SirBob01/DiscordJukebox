@@ -18,6 +18,16 @@ class Track {
   }
 
   /**
+   * Calculate a similarity score to determine if a result is a match
+   */
+  score(item) {
+    // If "lyrics" is in the title, score higher. This is usually the actual song
+    const lyrics = (item.title.toLowerCase().search("lyrics") > -1) ? 1 : 0
+    const duration = 1 - Math.abs(item.duration.seconds - this.duration) / this.duration
+    return lyrics * 0.5 + duration * 0.5
+  }
+
+  /**
    * Match a Spotify track to a Youtube video
    */
   async matchSpotify () {
@@ -32,8 +42,8 @@ class Track {
 
     const keys = Object.keys(mapped)
     keys.sort((a, b) => {
-      const score1 = 1 - Math.abs(mapped[a].duration.seconds - this.duration) / this.duration
-      const score2 = 1 - Math.abs(mapped[b].duration.seconds - this.duration) / this.duration
+      const score1 = this.score(mapped[a])
+      const score2 = this.score(mapped[b])
 
       if (score1 < score2) {
         return 1
