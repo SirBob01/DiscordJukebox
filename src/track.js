@@ -20,9 +20,9 @@ class Track {
   /**
    * Calculate a similarity score to determine if a result is a match
    */
-  score(item) {
+  score (item) {
     // If "lyrics" is in the title, score higher. This is usually the actual song
-    const lyrics = (item.title.toLowerCase().search("lyrics") > -1) ? 1 : 0
+    const lyrics = (item.title.toLowerCase().search('lyrics') > -1) ? 1 : 0
     const duration = 1 - Math.abs(item.duration.seconds - this.duration) / this.duration
     return lyrics * 0.5 + duration * 0.5
   }
@@ -66,6 +66,7 @@ class Track {
 
     if (bestMatch != null) {
       this.url = bestMatch.link
+      this.duration = bestMatch.duration.seconds
     } else {
       this.url = null
     }
