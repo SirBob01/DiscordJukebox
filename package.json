@@ -4,7 +4,8 @@
   "description": "Discord music bot",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon start"
   },
   "repository": {
     "type": "git",
@@ -28,12 +29,12 @@
     "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
     "ffmpeg": "0.0.4",
-    "ffmpeg-static": "^4.4.0",
+    "ffmpeg-static": "4.4.0",
     "libsodium-wrappers": "^0.7.9",
     "spotify-url-info": "^2.2.3",
     "youtube-dl-exec": "^1.2.13",
     "youtube-search": "^1.1.6",
-    "ytdl-core": "4.9.1"
+    "ytdl-core": "^4.11.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.13"
